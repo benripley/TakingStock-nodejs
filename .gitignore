@@ -1,0 +1,12 @@
+# Dependency directory
+# https://docs.npmjs.com/misc/faq#should-i-check-my-node-modules-folder-into-git
+/node_modules
+
+# Visual Studio Code file
+/.vscode
+
+# Optional npm cache directory
+.npm
+
+# Private configuration data
+config.json
