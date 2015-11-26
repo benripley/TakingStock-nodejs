@@ -6,10 +6,17 @@
   "main": "server.js",
   "dependencies": {
     "azure-storage": "^0.6.0",
+    "bcrypt-nodejs": "latest",
     "body-parser": "~1.4.2",
     "express": "~4.5.1",
     "nconf": "^0.8.2",
-    "node-uuid": "^1.4.7"
+    "node-uuid": "^1.4.7",
+    "passport": "^0.3.2",
+    "passport-facebook": "^2.0.0",
+    "passport-google-oauth": "^0.2.0",
+    "passport-http-bearer": "^1.0.1",
+    "passport-local": "^1.0.0",
+    "passport-twitter": "^1.0.3"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

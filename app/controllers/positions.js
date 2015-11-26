@@ -7,29 +7,56 @@ var loadconfig = require('../config/loadconfig'); // load the config from enviro
 var config = loadconfig.CONFIG;
 var position = new Position(azure.createTableService(config.accountName, config.accountKey));
 
-router.get('/api/positions', function(req, res) {
-  position.all(function positionsFound(error, items) {
-      if(error) {
-        throw error;
-      } else {
-        res.json(items);
-      }
-    });
-});
 
-router.get('/api/positions/:id', function(req, res) {
-  position.find(req.params.id, function positionFound(error, item) {
-      if(error) {
-        throw error;
-      } else {
-        res.json(item);
-      }
-    });
-});
+module.exports = function(app, passport) {
+  app.get('/api/positions', 
+    passport.authenticate('bearer', { session: false }),
+    function(req, res) {
+      position.all(function positionsFound(error, items) {
+        if(error) {
+          throw error;
+        } else {
+          res.json(items);
+        }
+      });
+  });
 
-router.post('/api/positions'), function(req, res) {
-  position.create()
-}
-
-
-module.exports = router
+  app.get('/api/positions/:id', 
+    passport.authenticate('bearer', { session: false }),
+    function(req, res) {
+      position.findById(req.params.id, function positionFound(error, item) {
+        if(error) {
+          throw error;
+        } else {
+          res.json(item);
+        }
+      });
+  });
+  
+  app.post('/api/positions',
+    passport.authenticate('bearer', { session: false }),
+    function(req, res) {
+      var newPosition = {}; // get from body-parser
+      position.create(newPosition, function positionDeleted(error, item) {
+        if(error) {
+          throw error;
+        } else {
+          res.send(201); // return position with id...
+        }     
+      });
+    }
+  )
+  
+  app.delete('/api/positions',  
+    passport.authenticate('bearer', { session: false }),
+    function(req, res) {
+      position.delete(req.params.id, function positionDeleted(error, item) {
+        if(error) {
+          throw error;
+        } else {
+          res.send(200);
+        }     
+      });
+  });
+  
+};

@@ -15,7 +15,7 @@ function Position(storageClient) {
 };
 
 Position.prototype = {
-  find: function(id, callback) {
+  findById: function(id, callback) {
     self = this;
     // TODO: partitionKey ('test') should be dynamic and come from authenticated userId
     self.storageClient.retrieveEntity(this.tableName, 'test', id, function(error, result, response){
@@ -58,7 +58,22 @@ Position.prototype = {
       }
       callback(null);
     });
+  },
+  
+  delete: function(id, callback) {
+    self = this;
+    var itemDescriptor = {
+      PartitionKey: entityGen.String('test'),
+      RowKey: entityGen.String(id),
+    };
+    self.storageClient.deleteEntity(self.tableName, itemDescriptor, function(error, response){
+      if(error){  
+        callback(error);
+      }
+      callback(null);
+    });
   }
+  
 }
 
 //https://www.devtxt.com/blog/azure-table-storage-library-for-nodejs-frustrations
