@@ -8,6 +8,7 @@
     "azure-storage": "^0.6.0",
     "bcrypt-nodejs": "latest",
     "body-parser": "~1.4.2",
+    "cors": "^2.7.1",
     "express": "~4.5.1",
     "nconf": "^0.8.2",
     "node-uuid": "^1.4.7",

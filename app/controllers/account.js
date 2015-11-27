@@ -12,37 +12,40 @@ var jsonParser = bodyParser.json()
 
 module.exports = function(app, passport) {
   
-  app.post('/account/login', jsonParser, function(req, res) {
-    res.json(req.body);
+  app.post('/account/token', function(req, res) {
+    
+    if(!req.body || !req.body.username || !req.body.password) res.sendStatus(400);
+    
+    user.login(req.body.username, req.body.password, function usersFound(error, user) {
+        if(error) {
+          throw error;
+        } else {
+          res.json({ access_token: user.token });
+        }
+      });
   }),
   
   app.post('/account/signup', function(req, res) {
-    var u = { email: 'ben.ripley@gmail.com', token: 'test'};
-    user.create(u, function(){
-      res.sendStatus(201); 
+    
+    if(!req.body || !req.body.email || !req.body.password) 
+      res.sendStatus(400);
+    
+    user.findByUsername(req.body.email, function userFound(error, u) {
+      if(u) {
+        res.status(409).json({ message: 'That email is already in use.' })
+      }
+      else {
+        user.create(req.body.email, req.body.password, function(newUser){
+          res.json({ access_token: newUser.token });
+        });
+      }
     });
   }),
-  
-  app.get('/auth/all', 
+   
+  app.get('/account/profile', 
+    passport.authenticate('bearer', { session: false }),
     function(req, res) {
-      user.all(function userFound(error, items) {
-        if(error) {
-          throw error;
-        } else {
-          res.json(items);
-        }
-      });
-  }),
-  
-  app.get('/auth/:username', 
-    function(req, res) {
-      user.findByUsername(req.params.username, function userFound(error, u) {
-        if(error) {
-          throw error;
-        } else {
-          res.json(u);
-        }
-      });
+      res.json(req.user);
   }),
   
   

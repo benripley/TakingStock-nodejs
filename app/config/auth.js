@@ -4,6 +4,7 @@ var BearerStrategy = require('passport-http-bearer').Strategy;
 var azure = require('azure-storage');
 var User = require('../models/user');
 var loadconfig = require('../config/loadconfig'); // load the config from environment vars (production) or /config.json file (dev)
+var crypto = require('crypto');
 
 var config = loadconfig.CONFIG;
 var user = new User(azure.createTableService(config.accountName, config.accountKey));
@@ -15,11 +16,16 @@ var user = new User(azure.createTableService(config.accountName, config.accountK
 // that the password is correct and then invoke `cb` with a user object, which
 // will be set at `req.user` in route handlers after authentication.
 passport.use(new LocalStrategy(
-  function(username, password, cb) {
-    user.findByUsername(username, function(err, user) {
+  function(email, password, cb) {
+    
+    var sha256 = crypto.createHash("sha256");
+    sha256.update(password, "utf8");
+    var pwhash = sha256.digest("base64");
+    
+    user.findByEmail(email, function(err, user) {
       if (err) { return cb(err); }
       if (!user) { return cb(null, false); }
-      if (user.password != password) { return cb(null, false); }
+      if (user.password != pwhash) { return cb(null, false); }
       return cb(null, user);
     });
   }));

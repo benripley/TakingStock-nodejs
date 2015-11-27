@@ -15,10 +15,9 @@ function Position(storageClient) {
 };
 
 Position.prototype = {
-  findById: function(id, callback) {
+  findById: function(partitionKey, id, callback) {
     self = this;
-    // TODO: partitionKey ('test') should be dynamic and come from authenticated userId
-    self.storageClient.retrieveEntity(this.tableName, 'test', id, function(error, result, response){
+    self.storageClient.retrieveEntity(this.tableName, partitionKey, id, function(error, result, response){
       if(error) {
         callback(error);
       } else {
@@ -27,10 +26,9 @@ Position.prototype = {
     });
   },
   
-  all: function(callback) {
+  all: function(partitionKey, callback) {
     self = this;
-    // TODO: partitionKey ('test') should be dynamic and come from authenticated userId
-    var query = new azure.TableQuery().top(1000).where('PartitionKey eq ?', 'test');
+    var query = new azure.TableQuery().top(1000).where('PartitionKey eq ?', partitionKey);
     self.storageClient.queryEntities(this.tableName, query, null, function(error, result, response){
       if(error) {
         callback(error);
@@ -41,16 +39,16 @@ Position.prototype = {
     });
   },
   
-  create: function(position, callback) {
+  create: function(partitionKey, position, callback) {
     self = this;
     var itemDescriptor = {
-      PartitionKey: entityGen.String('test'),
+      PartitionKey: entityGen.String(partitionKey),
       RowKey: entityGen.String(uuid()),
-      date: entityGen.DateTime(position.date),
-      symbol: entityGen.String(position.symbol),
-      price: entityGen.Double(position.price),
-      commission: entityGen.Double(position.commission),
-      quantity: entityGen.Double(position.quantity)
+      Date: entityGen.DateTime(position.date),
+      Symbol: entityGen.String(position.symbol),
+      Price: entityGen.Double(position.price),
+      Commission: entityGen.Double(position.commission),
+      Quantity: entityGen.Double(position.quantity)
     };
     self.storageClient.insertEntity(self.tableName, itemDescriptor, function entityInserted(error) {
       if(error){  
@@ -60,10 +58,10 @@ Position.prototype = {
     });
   },
   
-  delete: function(id, callback) {
+  delete: function(partitionKey, id, callback) {
     self = this;
     var itemDescriptor = {
-      PartitionKey: entityGen.String('test'),
+      PartitionKey: entityGen.String(partitionKey),
       RowKey: entityGen.String(id),
     };
     self.storageClient.deleteEntity(self.tableName, itemDescriptor, function(error, response){
@@ -89,5 +87,12 @@ function toDto(azureTableEntity)
       }
     }
   }
-  return obj;
+  return {
+    commission: obj.Commission,
+    date: obj.Date,
+    price: obj.Price,
+    quantity: obj.Quantity,
+    symbol: obj.Symbol,
+    id: obj.id
+  };
 }

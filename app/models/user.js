@@ -32,47 +32,50 @@ User.prototype = {
   
   findByToken: function(token, callback) {
     self = this;
-    // TODO: partitionKey ('test') ...
     var query = new azure.TableQuery()
       .top(1)
-      .where('PartitionKey eq ?', 'test')
-      .where('token eq ?', token)
+      .where('PartitionKey eq ? and token eq ?', 'test', token);
     self.storageClient.queryEntities(this.tableName, query, null, function(error, result, response) {
       if(error) {
         callback(error);
       } else {
-        callback(null, result.entries.map(toDto));
+        if(result.entries && result.entries.length > 0) callback(null, toDto(result.entries[0]));
+        else callback(null, null);
       }
     });
   },
   
-  findByUsername: function(username, callback) {
+  findByEmail: function(email, callback) {
     self = this;
-    // TODO: partitionKey ('test') ...
     var query = new azure.TableQuery()
       .top(1)
-      .where('PartitionKey eq ? and email eq ?', 'test', username);
+      .where('PartitionKey eq ? and email eq ?', 'test', email);
     self.storageClient.queryEntities(this.tableName, query, null, function(error, result, response) {
       if(error) {
         callback(error);
       } else {
-        callback(null, toDto(result));
+        if(result.entries && result.entries.length > 0) callback(null, toDto(result.entries[0]));
+        else callback(null, null);
       }
     });
   },
   
-  create: function(user, callback) {
+  create: function(email, password, callback) {
     self = this;
+    
     var sha256 = crypto.createHash("sha256");
-    sha256.update(user.password, "utf8");
+    sha256.update(password, "utf8");
     var pwhash = sha256.digest("base64");
+    
+    var token = email; // temporary
+    var id = uuid();
     
     var itemDescriptor = {
       PartitionKey: entityGen.String('test'),
-      RowKey: entityGen.String(uuid()),
-      email: entityGen.String(user.email),
+      RowKey: entityGen.String(id),
+      email: entityGen.String(email),
       password: entityGen.String(pwhash),
-      token: entityGen.String(user.token),
+      token: entityGen.String(token),
       
       // localEmail: entityGen.String(user.localEmail),
       // localPassword: entityGen.String(user.localPassword),
@@ -93,17 +96,45 @@ User.prototype = {
       if(error){  
         callback(error);
       }
-      callback(null);
+      callback({ id: id, email: email, token: token });
+    });
+  },
+  
+  login: function(email, password, callback) {
+    self = this;
+    
+    var sha256 = crypto.createHash("sha256");
+    sha256.update(password, "utf8");
+    var pwhash = sha256.digest("base64");
+    
+    var query = new azure.TableQuery()
+      .top(1)
+      .where('PartitionKey eq ? and email eq ?', 'test', email);
+    self.storageClient.queryEntities(this.tableName, query, null, function(error, result, response) {
+      if(error) {
+        callback(error);
+      } else {
+        if(result.entries && result.entries.length > 0) {
+          var user = toDto(result.entries[0]);
+          if(result.entries[0].password["_"] === pwhash)
+            callback(null, user);
+          else
+            callback(null, null);
+        }
+        else 
+        {
+          callback(null, null);
+        }
+      }
     });
   }
-  
+
 };  
   
   
 //https://www.devtxt.com/blog/azure-table-storage-library-for-nodejs-frustrations
 function toDto(azureTableEntity) 
-{
-  console.log(azureTableEntity);
+{ 
   var obj = {};
   for (var propertyName in azureTableEntity) {
     if(["PartitionKey","Timestamp"].indexOf(propertyName)==-1) {
@@ -114,5 +145,9 @@ function toDto(azureTableEntity)
       }
     }
   }
-  return obj;
+  return {
+    id: obj.id,
+    email: obj.email,
+    token: obj.token
+  };
 }

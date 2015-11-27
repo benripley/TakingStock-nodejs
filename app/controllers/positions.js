@@ -12,7 +12,7 @@ module.exports = function(app, passport) {
   app.get('/api/positions', 
     passport.authenticate('bearer', { session: false }),
     function(req, res) {
-      position.all(function positionsFound(error, items) {
+      position.all(req.user.id, function positionsFound(error, items) {
         if(error) {
           throw error;
         } else {
@@ -24,7 +24,7 @@ module.exports = function(app, passport) {
   app.get('/api/positions/:id', 
     passport.authenticate('bearer', { session: false }),
     function(req, res) {
-      position.findById(req.params.id, function positionFound(error, item) {
+      position.findById(req.user.id, req.params.id, function positionFound(error, item) {
         if(error) {
           throw error;
         } else {
@@ -36,8 +36,8 @@ module.exports = function(app, passport) {
   app.post('/api/positions',
     passport.authenticate('bearer', { session: false }),
     function(req, res) {
-      var newPosition = {}; // get from body-parser
-      position.create(newPosition, function positionDeleted(error, item) {
+      var newPosition = req.body;
+      position.create(req.user.id, newPosition, function positionDeleted(error, item) {
         if(error) {
           throw error;
         } else {
@@ -50,7 +50,7 @@ module.exports = function(app, passport) {
   app.delete('/api/positions',  
     passport.authenticate('bearer', { session: false }),
     function(req, res) {
-      position.delete(req.params.id, function positionDeleted(error, item) {
+      position.delete(req.user.id, req.params.id, function positionDeleted(error, item) {
         if(error) {
           throw error;
         } else {
